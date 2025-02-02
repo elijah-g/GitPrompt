@@ -1,0 +1,138 @@
+/* styles/global.css */
+
+:root {
+    --bg-color: #0A192F; /* Dark Theme Base (midnight blue) */
+    --text-color: #ffffff; /* Default text color */
+    --accent-color: #00E5FF; /* Neon Cyan for the echo glow */
+    --secondary-color: #888888; /* Subtle gray accent */
+    --panel-bg: rgba(255, 255, 255, 0.05); /* Glassmorphism panel background */
+    --font-header: "Inter", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-mono);
+    line-height: 1.6;
+  }
+  
+  /* Container for page content */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Header styles */
+  header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  header h1 {
+    font-family: var(--font-header);
+    font-size: 2.5rem;
+    color: var(--accent-color);
+    margin: 0;
+  }
+  
+  header h2 {
+    font-family: var(--font-header);
+    font-size: 1.8rem;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+  }
+  
+  /* Glassmorphism panel */
+  .panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Primary button styles with neon glow and echo effect */
+  button {
+    background-color: var(--accent-color);
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-family: var(--font-header);
+    color: var(--bg-color);
+    cursor: pointer;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    position: relative;
+  }
+  
+  button:hover {
+    box-shadow: 0 0 15px var(--accent-color);
+    transform: scale(1.02);
+  }
+  
+  /* Echo pulse animation */
+  @keyframes echoPulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 20px 10px rgba(0, 229, 255, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 229, 255, 0);
+    }
+  }
+  
+  button::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    animation: echoPulse 2s infinite;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  
+  /* Input, select, textarea styling to mimic terminal input fields */
+  select,
+  input,
+  textarea {
+    background-color: #1e2a38;
+    color: var(--text-color);
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    padding: 10px;
+    font-family: var(--font-mono);
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  select:focus,
+  input:focus,
+  textarea:focus {
+    box-shadow: 0 0 8px var(--accent-color);
+  }
+  
+  /* Link styling */
+  .link {
+    color: var(--accent-color);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  .link:hover {
+    text-decoration: underline;
+  }
+  
