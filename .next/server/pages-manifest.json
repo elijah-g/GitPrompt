@@ -2,9 +2,8 @@
   "/_error": "pages/_error.js",
   "/_app": "pages/_app.js",
   "/_document": "pages/_document.js",
-  "/api/repos": "pages/api/repos.js",
-  "/dashboard": "pages/dashboard.js",
   "/": "pages/index.js",
+  "/dashboard": "pages/dashboard.js",
   "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js",
-  "/api/fetchRepo": "pages/api/fetchRepo.js"
+  "/api/repos": "pages/api/repos.js"
 }

@@ -1,14 +1,16 @@
 // pages/api/folderStructure.js
 import { getSession } from "next-auth/react";
 
+// Updated buildFolderTree to include file sizes and aggregate them for directories.
 function buildFolderTree(treeItems) {
-  const root = { name: '', path: '', type: 'directory', children: [] };
+  const root = { name: '', path: '', type: 'directory', children: [], size: 0 };
   for (const item of treeItems) {
     if (item.type === 'blob') {
       const parts = item.path.split('/');
       let current = root;
       let fullPath = '';
-      parts.forEach((part, i) => {
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
         fullPath = fullPath ? `${fullPath}/${part}` : part;
         let child = current.children.find((c) => c.name === part);
         if (!child) {
@@ -16,14 +18,31 @@ function buildFolderTree(treeItems) {
             name: part,
             path: fullPath,
             type: i === parts.length - 1 ? 'file' : 'directory',
-            children: []
+            children: [],
+            size: 0,
           };
           current.children.push(child);
         }
+        // For file nodes, record the size (in bytes) from GitHub.
+        if (i === parts.length - 1) {
+          child.size = item.size || 0;
+        }
         current = child;
-      });
+      }
     }
   }
+
+  // Recursively aggregate sizes for directories.
+  function aggregateSizes(node) {
+    if (node.type === 'file') return node.size;
+    let totalSize = 0;
+    for (const child of node.children) {
+      totalSize += aggregateSizes(child);
+    }
+    node.size = totalSize;
+    return totalSize;
+  }
+  aggregateSizes(root);
   return root;
 }
 

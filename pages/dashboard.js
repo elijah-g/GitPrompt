@@ -2,89 +2,89 @@
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 
-// Recursive component for an expandable folder tree.
-function FolderTree({ node, exclusions, togglePaths }) {
-  // Nodes are collapsed by default.
-  const [expanded, setExpanded] = useState(false);
-
-  // Recursively compute an array of all descendant paths (including this node).
-  const getAllDescendantPaths = (node) => {
-    let paths = [node.path];
-    if (node.children && node.children.length > 0) {
-      node.children.forEach((child) => {
-        paths = paths.concat(getAllDescendantPaths(child));
-      });
-    }
-    return paths;
-  };
-
-  // Determine if this node is included (i.e. not in the exclusions list).
-  const isIncluded = !exclusions.includes(node.path);
-
-  // When toggling, propagate the change to all descendant nodes.
-  const handleToggle = () => {
-    const descendantPaths = getAllDescendantPaths(node);
-    togglePaths(descendantPaths, isIncluded);
-  };
-
+// A simple navigation bar component.
+function NavBar() {
   return (
-    <li style={{ marginLeft: "10px", listStyleType: "none" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          border: "1px solid var(--secondary-color)",
-          padding: "4px",
-          borderRadius: "4px",
-          marginBottom: "4px",
-          background: "rgba(255, 255, 255, 0.05)",
-        }}
-      >
-        {node.children && node.children.length > 0 && (
-          <span
-            style={{
-              cursor: "pointer",
-              marginRight: "5px",
-              color: "var(--accent-color)",
-            }}
-            onClick={() => setExpanded(!expanded)}
-          >
-            {expanded ? "▼" : "►"}
-          </span>
-        )}
-        {node.path !== "" && (
-          <label
-            style={{
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={isIncluded}
-              onChange={handleToggle}
-              style={{ marginRight: "5px" }}
-            />
-            {node.name} {node.type === "directory" ? "(Folder)" : "(File)"}
-          </label>
-        )}
-      </div>
-      {node.children && node.children.length > 0 && expanded && (
-        <ul style={{ marginLeft: "20px", listStyle: "none", paddingLeft: 0 }}>
-          {node.children.map((child) => (
-            <FolderTree
-              key={child.path}
-              node={child}
-              exclusions={exclusions}
-              togglePaths={togglePaths}
-            />
-          ))}
-        </ul>
-      )}
-    </li>
+    <nav className="navbar">
+      <h1 className="navbar-title">CodeEcho</h1>
+      <button onClick={() => signOut({ callbackUrl: "/" })} className="nav-signout">
+        Sign Out
+      </button>
+    </nav>
   );
 }
+
+// Helper to format file size (in bytes) to a human-readable string.
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    const kb = bytes / 1024;
+    if (kb < 1024) return kb.toFixed(2) + " KB";
+    const mb = kb / 1024;
+    return mb.toFixed(2) + " MB";
+  }
+  
+  function FolderTree({ node, exclusions, togglePaths }) {
+    const [expanded, setExpanded] = useState(false);
+  
+    // Recursively collect all descendant paths.
+    const getAllDescendantPaths = (node) => {
+      let paths = [node.path];
+      if (node.children && node.children.length > 0) {
+        node.children.forEach((child) => {
+          paths = paths.concat(getAllDescendantPaths(child));
+        });
+      }
+      return paths;
+    };
+  
+    const isIncluded = !exclusions.includes(node.path);
+  
+    const handleToggle = () => {
+      const descendantPaths = getAllDescendantPaths(node);
+      togglePaths(descendantPaths, isIncluded);
+    };
+  
+    return (
+      <li className="folder-tree-item">
+        <div className="folder-tree-container">
+          {node.children && node.children.length > 0 && (
+            <span
+              className="folder-tree-toggle"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? "▼" : "►"}
+            </span>
+          )}
+          {node.path !== "" && (
+            <label className="folder-tree-label">
+              <input
+                type="checkbox"
+                checked={isIncluded}
+                onChange={handleToggle}
+                className="folder-tree-checkbox"
+              />
+              <span className="folder-tree-name">
+                {node.name} {node.type === "directory" ? "(Folder)" : "(File)"}
+              </span>
+              <span className="folder-tree-size">{formatSize(node.size)}</span>
+            </label>
+          )}
+        </div>
+        {node.children && node.children.length > 0 && expanded && (
+          <ul className="folder-tree-list">
+            {node.children.map((child) => (
+              <FolderTree
+                key={child.path}
+                node={child}
+                exclusions={exclusions}
+                togglePaths={togglePaths}
+              />
+            ))}
+          </ul>
+        )}
+      </li>
+    );
+  }
 
 export default function Dashboard() {
   const { data: session } = useSession();
@@ -95,11 +95,9 @@ export default function Dashboard() {
   const [repoData, setRepoData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [folderTree, setFolderTree] = useState(null);
-  const [exclusions, setExclusions] = useState([]); // Global list of excluded paths
+  const [exclusions, setExclusions] = useState([]);
 
-  // Global function to update exclusions for an array of paths.
-  // If the node is currently included, add its paths to exclusions.
-  // If it’s currently excluded, remove its paths.
+  // Toggle a list of paths between included and excluded.
   const togglePaths = (paths, currentlyIncluded) => {
     if (currentlyIncluded) {
       setExclusions((prev) => {
@@ -145,14 +143,10 @@ export default function Dashboard() {
     setSelectedBranch(e.target.value);
     if (selectedRepo) {
       const { owner, repo } = selectedRepo;
-      fetch(
-        `/api/folderStructure?owner=${owner}&repo=${repo}&branch=${e.target.value}`
-      )
+      fetch(`/api/folderStructure?owner=${owner}&repo=${repo}&branch=${e.target.value}`)
         .then((res) => res.json())
         .then((data) => setFolderTree(data))
-        .catch((err) =>
-          console.error("Error fetching folder structure:", err)
-        );
+        .catch((err) => console.error("Error fetching folder structure:", err));
     }
   };
 
@@ -177,7 +171,7 @@ export default function Dashboard() {
     }
   };
 
-  // Copy the repository data output to the clipboard.
+  // Copy the repository output to the clipboard.
   const copyOutput = () => {
     if (repoData && repoData.text) {
       navigator.clipboard
@@ -190,32 +184,25 @@ export default function Dashboard() {
   if (!session) {
     return (
       <div className="container">
-        <p>Please sign in to view your dashboard.</p>
+        <p>Please sign in to view your repository explorer.</p>
       </div>
     );
   }
 
   return (
     <div className="container">
-      <header>
-        <h1>CodeEcho Dashboard</h1>
-      </header>
-      <div className="panel">
-        <button onClick={() => signOut()}>Sign Out</button>
-      </div>
+      <NavBar />
+      <h2 className="page-title">Repository Explorer</h2>
 
       <div className="panel">
-        <h2>Select Repository</h2>
+        <h3>Select Repository</h3>
         <select onChange={handleRepoChange} defaultValue="">
           <option value="" disabled>
             Select a repository
           </option>
           {Array.isArray(repos) &&
             repos.map((repo) => (
-              <option
-                key={repo.id}
-                value={`${repo.owner.login}/${repo.name}`}
-              >
+              <option key={repo.id} value={`${repo.owner.login}/${repo.name}`}>
                 {repo.full_name}
               </option>
             ))}
@@ -224,7 +211,7 @@ export default function Dashboard() {
 
       {branches.length > 0 && (
         <div className="panel">
-          <h2>Select Branch</h2>
+          <h3>Select Branch</h3>
           <select onChange={handleBranchChange} defaultValue="">
             <option value="" disabled>
               Select a branch
@@ -240,26 +227,20 @@ export default function Dashboard() {
 
       {folderTree && (
         <div className="panel">
-          <h2>Include / Exclude Files &amp; Folders</h2>
+          <h3>Include / Exclude Files &amp; Folders</h3>
           <p>
-            By default, all items are included. Uncheck an item to exclude it
-            (this will unselect all its sub-files/folders).
+            All items are included by default. Uncheck an item to exclude it (this will
+            also unselect all its sub-items).
           </p>
-          <ul style={{ listStyle: "none", paddingLeft: 0 }}>
-            <FolderTree
-              node={folderTree}
-              exclusions={exclusions}
-              togglePaths={togglePaths}
-            />
+          <ul className="folder-tree-list">
+            <FolderTree node={folderTree} exclusions={exclusions} togglePaths={togglePaths} />
           </ul>
         </div>
       )}
 
       {selectedRepo && selectedBranch && (
         <div className="panel">
-          <button onClick={handleFetchRepo}>
-            Fetch Repository Data
-          </button>
+          <button onClick={handleFetchRepo}>Fetch Repository Data</button>
         </div>
       )}
 
@@ -270,30 +251,12 @@ export default function Dashboard() {
       )}
 
       {repoData && (
-        <div className="panel" style={{ position: "relative" }}>
-          {/* Copy button in the top right corner */}
-          <button
-            onClick={copyOutput}
-            style={{
-              position: "absolute",
-              top: "10px",
-              right: "10px",
-              background: "var(--accent-color)",
-              color: "var(--bg-color)",
-              border: "none",
-              padding: "5px 10px",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
+        <div className="panel panel-relative">
+          <button onClick={copyOutput} className="copy-button">
             Copy
           </button>
-          <h2>Repository Data</h2>
-          <textarea
-            readOnly
-            value={repoData.text}
-            style={{ width: "100%", height: "400px" }}
-          />
+          <h3>Repository Data</h3>
+          <textarea readOnly value={repoData.text} className="repo-textarea" />
           <p>Total Estimated Tokens: {repoData.totalTokens}</p>
         </div>
       )}
