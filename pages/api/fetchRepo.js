@@ -86,8 +86,6 @@ export default async function handler(req, res) {
     const folderStructureString = renderTree(folderTreeObj);
 
     let totalTokens = 0;
-    const tokenLimit = 150000; // 150k tokens limit
-
     // Begin output with repo details and folder structure (in a code fence).
     let outputText = `# Repository: ${owner}/${repo}\n**Branch:** ${branch}\n\n`;
     outputText += `## Folder Structure:\n\`\`\`\n${folderStructureString}\n\`\`\`\n\n`;
@@ -106,11 +104,7 @@ export default async function handler(req, res) {
         ".pdf",
         ".exe",
       ];
-      if (
-        binaryExtensions.some((ext) =>
-          item.path.toLowerCase().endsWith(ext)
-        )
-      ) {
+      if (binaryExtensions.some((ext) => item.path.toLowerCase().endsWith(ext))) {
         continue;
       }
       // Skip if the file path is within an excluded folder/file.
@@ -127,19 +121,8 @@ export default async function handler(req, res) {
 
       // Estimate token count for the file.
       let fileTokens = estimateTokenCount(content);
-      if (totalTokens + fileTokens > tokenLimit) {
-        // Truncate the file if adding it would exceed the limit.
-        const remainingTokens = tokenLimit - totalTokens;
-        const remainingChars = remainingTokens * 4;
-        content = content.slice(0, remainingChars);
-        fileTokens = estimateTokenCount(content);
-        outputText += `## File: ${item.path} (truncated)\n\`\`\`\n${content}\n\`\`\`\n\n`;
-        totalTokens += fileTokens;
-        break; // Stop processing once the limit is reached.
-      } else {
-        outputText += `## File: ${item.path}\n\`\`\`\n${content}\n\`\`\`\n\n`;
-        totalTokens += fileTokens;
-      }
+      outputText += `## File: ${item.path}\n\`\`\`\n${content}\n\`\`\`\n\n`;
+      totalTokens += fileTokens;
     }
     res.status(200).json({ text: outputText, totalTokens });
   } catch (error) {
